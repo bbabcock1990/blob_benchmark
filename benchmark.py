@@ -13,8 +13,9 @@ BLOB_PREFIX = "test_blob"
 # Data for testing
 DATA_SIZE_MB = 64  # Set file size to 64 MB
 TEST_DATA = os.urandom(DATA_SIZE_MB * 1024 * 1024)
-NUM_THREADS = 10  # Number of parallel threads
-MAX_CONCURRENCY = 8  # Max concurrency for Azure SDK operations
+NUM_THREADS = 16  # Number of parallel threads
+MAX_CONCURRENCY = 2  # Max concurrency for Azure SDK operations
+NUM_FILES = 100  # Total number of files to upload
 
 # Create BlobServiceClient
 blob_service_client = BlobServiceClient(
@@ -67,7 +68,7 @@ with open("test_data.bin", "wb") as f:
 # Verbose details
 print("===== Azure Blob Storage Performance Test =====")
 print(f"File size: {DATA_SIZE_MB} MB")
-print(f"Number of files: {NUM_THREADS}")
+print(f"Number of files: {NUM_FILES}")
 print(f"Number of threads: {NUM_THREADS}")
 print(f"Max concurrency: {MAX_CONCURRENCY}")
 print("==============================================\n")
@@ -76,10 +77,11 @@ print("==============================================\n")
 print("Starting parallel PUT operations...")
 put_start_time = time.time()
 with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-    put_times = list(executor.map(upload_blob, [f"{BLOB_PREFIX}_{i}" for i in range(NUM_THREADS)]))
+    # Generate file names for 100 files and map them to the upload_blob function
+    put_times = list(executor.map(upload_blob, [f"{BLOB_PREFIX}_{i}" for i in range(NUM_FILES)]))
 put_end_time = time.time()
 total_put_time = put_end_time - put_start_time
-avg_put_throughput = (DATA_SIZE_MB * NUM_THREADS) / total_put_time
+avg_put_throughput = (DATA_SIZE_MB * NUM_FILES) / total_put_time
 print(f"Total PUT time: {total_put_time:.2f} seconds")
 print(f"PUT Throughput (parallel): {avg_put_throughput:.2f} MB/s\n")
 
@@ -87,10 +89,11 @@ print(f"PUT Throughput (parallel): {avg_put_throughput:.2f} MB/s\n")
 print("Starting parallel GET operations...")
 get_start_time = time.time()
 with ThreadPoolExecutor(max_workers=NUM_THREADS) as executor:
-    get_times = list(executor.map(download_blob, [f"{BLOB_PREFIX}_{i}" for i in range(NUM_THREADS)]))
+    # Generate file names for 100 files and map them to the download_blob function
+    get_times = list(executor.map(download_blob, [f"{BLOB_PREFIX}_{i}" for i in range(NUM_FILES)]))
 get_end_time = time.time()
 total_get_time = get_end_time - get_start_time
-avg_get_throughput = (DATA_SIZE_MB * NUM_THREADS) / total_get_time
+avg_get_throughput = (DATA_SIZE_MB * NUM_FILES) / total_get_time
 print(f"Total GET time: {total_get_time:.2f} seconds")
 print(f"GET Throughput (parallel): {avg_get_throughput:.2f} MB/s\n")
 
@@ -116,9 +119,9 @@ def cleanup_local_files(file_names):
 
 # Cleanup
 print("Cleaning up blobs...")
-cleanup_blobs([f"{BLOB_PREFIX}_{i}" for i in range(NUM_THREADS)])
+cleanup_blobs([f"{BLOB_PREFIX}_{i}" for i in range(NUM_FILES)])
 print("Blob cleanup complete.")
 
 print("Cleaning up local files...")
-cleanup_local_files([f"downloaded_{BLOB_PREFIX}_{i}.bin" for i in range(NUM_THREADS)])
+cleanup_local_files([f"downloaded_{BLOB_PREFIX}_{i}.bin" for i in range(NUM_FILES)])
 print("Local file cleanup complete.")
