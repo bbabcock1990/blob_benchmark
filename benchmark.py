@@ -4,7 +4,7 @@ import subprocess
 
 # Azure Blob Storage details
 STORAGE_ACCOUNT_NAME = "storageblobtest01"
-CONTAINER_NAME = "testcontainer"
+CONTAINER_NAME = "testcontainer2"
 BLOB_PREFIX = "test_blob"
 SAS_TOKEN = ""  # Replace with your SAS token
 
