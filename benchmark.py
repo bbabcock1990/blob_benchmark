@@ -14,8 +14,8 @@ BLOB_PREFIX = "test_blob"
 DATA_SIZE_MB = 64  # Set file size to 64 MB
 TEST_DATA = os.urandom(DATA_SIZE_MB * 1024 * 1024)
 NUM_THREADS = 16  # Number of parallel threads
-MAX_CONCURRENCY = 2  # Max concurrency for Azure SDK operations
-NUM_FILES = 100  # Total number of files to upload
+MAX_CONCURRENCY = 16  # Max concurrency for Azure SDK operations
+NUM_FILES = 10  # Total number of files to upload
 
 # Create BlobServiceClient
 blob_service_client = BlobServiceClient(
@@ -35,11 +35,12 @@ def upload_blob(blob_name):
     try:
         blob_client = container_client.get_blob_client(blob_name)
         start_time = time.time()
-        with open("test_data.bin", "rb") as data_stream:  # Use a file or stream
+        with open("test_data.bin", "rb") as data_stream:
             blob_client.upload_blob(
                 data_stream,
                 overwrite=True,
-                max_concurrency=MAX_CONCURRENCY
+                max_concurrency=MAX_CONCURRENCY,
+                blob_type="BlockBlob"  # Specify the blob type
             )
         put_time = time.time() - start_time
         return put_time
@@ -53,6 +54,7 @@ def download_blob(blob_name):
         blob_client = container_client.get_blob_client(blob_name)
         start_time = time.time()
         with open(f"downloaded_{blob_name}.bin", "wb") as file_stream:
+            # Use the synchronous download_blob method
             download_stream = blob_client.download_blob(max_concurrency=MAX_CONCURRENCY)
             file_stream.write(download_stream.readall())
         get_time = time.time() - start_time
@@ -122,6 +124,7 @@ print("Cleaning up blobs...")
 cleanup_blobs([f"{BLOB_PREFIX}_{i}" for i in range(NUM_FILES)])
 print("Blob cleanup complete.")
 
+# Cleanup local files
 print("Cleaning up local files...")
 cleanup_local_files([f"downloaded_{BLOB_PREFIX}_{i}.bin" for i in range(NUM_FILES)])
 print("Local file cleanup complete.")
